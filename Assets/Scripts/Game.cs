@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,14 +19,13 @@ public class Game : MonoBehaviour
     public GameObject panelGameOver;
     public Button startButton;
 
-    public GameObject pipelineManager;
+    public PipelineManager pipelineManager;
     // Start is called before the first frame update
     private void Awake()
     {
         panelReady = GameObject.Find("GameReady");
         panelPlaying = GameObject.Find("GameUI");
         panelGameOver = GameObject.Find("GameOver");
-        pipelineManager = GameObject.Find("Pipeline Manager");
 
         panelPlaying.SetActive(false);
         panelGameOver.SetActive(false);
@@ -55,7 +53,7 @@ public class Game : MonoBehaviour
         this.status = GAME_STATUS.Playing;
         panelReady.SetActive(false);
         panelPlaying.SetActive(true);
-
+        pipelineManager.StartGenerate();
     }
 
     public void StopGame()
