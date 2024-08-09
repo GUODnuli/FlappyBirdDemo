@@ -20,6 +20,8 @@ public class PlayerController : MonoBehaviour
 
     public float upwardForce = 5f;
 
+    private Animator animator;
+
     private void Awake()
     {
         if (_instance == null)
@@ -34,23 +36,11 @@ public class PlayerController : MonoBehaviour
 
         rb2D = GetComponent<Rigidbody2D>();
         rb2D.isKinematic = true;
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
 
+        animator = GetComponent<Animator>();
     }
 
-    // Update is called once per frame
     void Update()
-    {
-
-    }
-
-    /// <summary>
-    /// This function is called every fixed framerate frame, if the MonoBehaviour is enabled.
-    /// </summary>
-    void FixedUpdate()
     {
         if (Game.Instance.status == Game.GAME_STATUS.Playing && Input.GetMouseButtonDown(0))
         {
@@ -66,5 +56,19 @@ public class PlayerController : MonoBehaviour
     public void PlayerStart()
     {
         rb2D.isKinematic = false;
+        animator.SetBool("isPlaying", true);
+    }
+
+    private void OnTriggerExit2D(Collider2D collider)
+    {
+        if(collider.gameObject.name == "pipeline(Clone)")
+        {
+            Game.Instance.TriggerScore();
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collider)
+    {
+        Game.Instance.StopGame();
     }
 }

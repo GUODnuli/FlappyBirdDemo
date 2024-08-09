@@ -1,7 +1,7 @@
 using System;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class Game : MonoBehaviour
 {
@@ -19,7 +19,7 @@ public class Game : MonoBehaviour
     public GameObject panelGameOver;
     public GameObject player;
     public Button startButton;
-
+    public Button restartGameButton;
     public PipelineManager pipelineManager;
 
     private PlayerController playerController;
@@ -28,6 +28,10 @@ public class Game : MonoBehaviour
     public event Action OnGameStart;
     public event Action OnFirstClick;
     public event Action OnGameOver;
+    public event Action OnRestartGame;
+
+    public static event Action OnScore;
+    private int score = 0;
 
     public static Game Instance { get; private set; }
 
@@ -47,9 +51,6 @@ public class Game : MonoBehaviour
         panelGameOver = GameObject.Find("GameOver");
         playerController = PlayerController.Instance;
 
-        panelPlaying.SetActive(false);
-        panelGameOver.SetActive(false);
-
         startButton = GetComponentInChildren<Button>();
 
         if (startButton != null)
@@ -57,7 +58,15 @@ public class Game : MonoBehaviour
             startButton.onClick.AddListener(StartGame);
         }
 
+        restartGameButton = panelGameOver.GetComponentInChildren<Button>();
 
+        if (restartGameButton != null)
+        {
+            restartGameButton.onClick.AddListener(RestartGame);
+        }
+
+        panelPlaying.SetActive(false);
+        panelGameOver.SetActive(false);
     }
     void Start()
     {
@@ -65,7 +74,8 @@ public class Game : MonoBehaviour
         OnGameStart += HandleGameStart;
         OnFirstClick += HandleFirstClick;
         OnGameOver += HandleGameOver;
-
+        OnScore += IncrementScore;
+        OnRestartGame += HandleRestart;
     }
 
     // Update is called once per frame
@@ -106,6 +116,10 @@ public class Game : MonoBehaviour
         this.status = GAME_STATUS.GameOver;
         panelPlaying.SetActive(false);
         panelGameOver.SetActive(true);
+        Time.timeScale = 0;
+        panelGameOver.transform.Find("ScorePanel/ThisScore").transform.GetComponent<Text>().text = score.ToString();
+        SaveHighScore(score);
+        panelGameOver.transform.Find("ScorePanel/BestScore").transform.GetComponent<Text>().text = LoadHighScore().ToString();
     }
 
     private void OnDestroy()
@@ -114,10 +128,52 @@ public class Game : MonoBehaviour
         OnGameStart -= HandleGameStart;
         OnFirstClick -= HandleFirstClick;
         OnGameOver -= HandleGameOver;
+        OnScore -= IncrementScore;
+        OnRestartGame -= HandleRestart;
 
         if (startButton != null)
         {
             startButton.onClick.RemoveAllListeners();
         }
+    }
+
+    private void IncrementScore()
+    {
+        score++;
+        panelPlaying.GetComponentInChildren<Text>().text = score.ToString();
+    }
+
+    public void TriggerScore()
+    {
+        OnScore?.Invoke();
+    }
+
+    private void SaveHighScore(int score)
+    {
+        int currentHighScore = PlayerPrefs.GetInt("HighScore", 0);
+        if (score > currentHighScore)
+        {
+            PlayerPrefs.SetInt("HighScore", score);
+            PlayerPrefs.Save();
+        }
+    }
+
+    private int LoadHighScore()
+    {
+        return PlayerPrefs.GetInt("HighScore", 0);
+    }
+
+    private void RestartGame()
+    {
+        OnRestartGame?.Invoke();
+    }
+
+    private void HandleRestart()
+    {
+        // 获取当前场景的名称
+        string sceneName = SceneManager.GetActiveScene().name;
+        // 重新加载当前场景
+        SceneManager.LoadScene(sceneName);
+        Time.timeScale = 1;
     }
 }
